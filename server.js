@@ -1,49 +1,68 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const XLSX = require('xlsx');
-const path = require('path');
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const xlsx = require("xlsx");
 
 const app = express();
+app.use(express.json());
 
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// ---- Load FAQ từ file Excel ----
+let faqData = [];
 
-app.get("/", (req, res) => {
-  res.send("Chatbox Support is running!");
-});
+function loadFAQ() {
+  try {
+    const filePath = path.join(__dirname, "faq.xlsx");
 
-
-// Đọc dữ liệu từ file Excel
-const workbook = XLSX.readFile(path.join(__dirname, 'faq.xlsx'));
-const sheetName = workbook.SheetNames[0];
-const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-// Tạo object lưu Q&A với chuẩn hóa lowercase + trim
-let faqData = {};
-sheet.forEach(row => {
-    if (row['question'] && row['answer']) {
-        const normalizedQ = row['question'].toString().trim().toLowerCase();
-        faqData[normalizedQ] = row['answer'].toString().trim();
+    if (!fs.existsSync(filePath)) {
+      console.warn("⚠️  File faq.xlsx không tồn tại. Server sẽ chạy mà không có dữ liệu FAQ.");
+      faqData = [];
+      return;
     }
+
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    faqData = xlsx.utils.sheet_to_json(sheet);
+
+    console.log(`✅ Đã load ${faqData.length} FAQ từ ${filePath}`);
+  } catch (err) {
+    console.error("❌ Lỗi khi load faq.xlsx:", err.message);
+    faqData = [];
+  }
+}
+
+// Gọi khi khởi động
+loadFAQ();
+
+// ---- Endpoint kiểm tra server ----
+app.get("/ping", (req, res) => {
+  res.json({ message: "pong", time: new Date().toISOString() });
 });
 
-// API chat
-app.post('/chat', (req, res) => {
-    let question = req.body.question || '';
-    const normalizedQuestion = question.toString().trim().toLowerCase();
-
-    let answer = faqData[normalizedQuestion] || "Xin lỗi, tôi chưa có câu trả lời cho câu hỏi này.";
-    // Xuống dòng khi hiển thị
-    answer = answer.replace(/\n/g, '<br>');
-
-    res.json({ answer });
+// ---- Endpoint lấy toàn bộ FAQ ----
+app.get("/faq", (req, res) => {
+  if (faqData.length === 0) {
+    return res.json({ message: "Chưa có dữ liệu FAQ" });
+  }
+  res.json(faqData);
 });
 
+// ---- Endpoint tìm câu trả lời theo keyword ----
+app.get("/faq/search", (req, res) => {
+  const keyword = (req.query.q || "").toLowerCase();
+  if (!keyword) {
+    return res.status(400).json({ error: "Thiếu tham số q" });
+  }
 
-// Khởi động server
+  const results = faqData.filter(item =>
+    item.question && item.question.toLowerCase().includes(keyword)
+  );
+
+  res.json({ keyword, results });
+});
+
+// ---- Khởi động server ----
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Server started at http://localhost:${PORT}`);
+  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
 });
