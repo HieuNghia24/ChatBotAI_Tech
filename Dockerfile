@@ -1,20 +1,17 @@
-# Sử dụng Node.js 18 chính thức
-FROM node:18-alpine
+FROM node:18
 
-# Tạo thư mục làm việc
+# Tạo thư mục app
 WORKDIR /app
 
-# Copy file package.json và package-lock.json trước để tối ưu cache
+# Copy package.json và cài dependencies
 COPY package*.json ./
-
-# Cài đặt dependencies
 RUN npm install --production
 
 # Copy toàn bộ source code
 COPY . .
 
-# Cổng mà app sẽ chạy
+# Cổng chạy app
 EXPOSE 3000
 
-# Command khởi chạy app
-CMD ["npm", "start"]
+# Lệnh khởi động
+CMD ["node", "server.js"]
