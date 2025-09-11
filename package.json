@@ -1,6 +1,7 @@
 {
-  "name": "chatbox-support-service",
+  "name": "chatbox-support",
   "version": "1.0.0",
+  "description": "Chatbox support app",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -1,13 +1,6 @@
 services:
   - type: web
-    name: chatbox-support-service
+    name: chatbox-support
     env: docker
     plan: free
     autoDeploy: true
-    region: oregon
-    dockerfilePath: ./Dockerfile
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3000
