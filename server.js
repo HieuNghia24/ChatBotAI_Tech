@@ -5,13 +5,17 @@ const xlsx = require("xlsx");
 
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 // ---- Load FAQ từ file Excel ----
 let faqData = [];
 
 function loadFAQ() {
   try {
-    const filePath = path.join(__dirname, "faq.xlsx");
+    const filePath = path.join(__dirname, 	"faq.xlsx");
 
     if (!fs.existsSync(filePath)) {
       console.warn("⚠️  File faq.xlsx không tồn tại. Server sẽ chạy mà không có dữ liệu FAQ.");
