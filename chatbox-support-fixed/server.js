@@ -5,11 +5,16 @@ const XLSX = require('xlsx');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get("/", (req, res) => {
+  res.send("Chatbox Support is running!");
+});
+
 
 // Đọc dữ liệu từ file Excel
 const workbook = XLSX.readFile(path.join(__dirname, 'faq.xlsx'));
@@ -39,6 +44,7 @@ app.post('/chat', (req, res) => {
 
 
 // Khởi động server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`✅ Server started at http://localhost:${PORT}`);
 });
