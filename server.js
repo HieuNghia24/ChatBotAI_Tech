@@ -73,7 +73,7 @@ app.get("/faq/reload", (req, res) => {
 });
 
 // ---- Khởi động server ----
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
 });
