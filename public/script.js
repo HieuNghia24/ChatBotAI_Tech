@@ -1,34 +1,42 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const chatBox = document.getElementById("chat-box");
-  const input = document.getElementById("chat-input");
-  const form = document.getElementById("chat-form");
+// public/script.js
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (!text) return;
+const chatBox = document.getElementById("chat-box");
+const input = document.getElementById("chat-input");
+const sendBtn = document.getElementById("send-btn");
 
-    appendMessage("user", text);
-    input.value = "";
+// Thêm tin nhắn vào giao diện
+function addMessage(text, sender) {
+  const msg = document.createElement("div");
+  msg.className = sender === "user" ? "msg user" : "msg bot";
+  msg.innerText = text;
+  chatBox.appendChild(msg);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
 
-    try {
-      const res = await fetch("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text })
-      });
-      const data = await res.json();
-      appendMessage("bot", data.answer);
-    } catch (err) {
-      appendMessage("bot", "⚠️ Lỗi kết nối tới server.");
-    }
-  });
+// Gửi câu hỏi đến API
+async function sendMessage() {
+  const question = input.value.trim();
+  if (!question) return;
 
-  function appendMessage(sender, text) {
-    const msg = document.createElement("div");
-    msg.className = sender === "user" ? "user-msg" : "bot-msg";
-    msg.innerText = text;
-    chatBox.appendChild(msg);
-    chatBox.scrollTop = chatBox.scrollHeight;
+  addMessage(question, "user");
+  input.value = "";
+
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
+
+    const data = await res.json();
+    addMessage(data.answer, "bot");
+  } catch (err) {
+    addMessage("❌ Lỗi kết nối server!", "bot");
   }
+}
+
+// Xử lý sự kiện
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendMessage();
 });

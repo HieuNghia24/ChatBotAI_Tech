@@ -1,46 +1,48 @@
+// server.js
 import express from "express";
 import path from "path";
-import fs from "fs";
-import XLSX from "xlsx";
+import { fileURLToPath } from "url";
+import xlsx from "xlsx";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const __dirname = path.resolve();
 
+// Middleware đọc JSON
 app.use(express.json());
+
+// Serve file tĩnh trong thư mục public
 app.use(express.static(path.join(__dirname, "public")));
 
-let faqData = [];
+// Load dữ liệu FAQ từ Excel
+const workbook = xlsx.readFile(path.join(__dirname, "faq.xlsx"));
+const sheetName = workbook.SheetNames[0];
+const sheet = workbook.Sheets[sheetName];
+const faqs = xlsx.utils.sheet_to_json(sheet);
 
-function loadFAQ() {
-  const filePath = path.join(__dirname, "faq.xlsx");
-  if (!fs.existsSync(filePath)) {
-    console.warn("⚠️ Không tìm thấy file faq.xlsx");
-    return;
+// API xử lý câu hỏi
+app.post("/api/ask", (req, res) => {
+  const question = req.body.question?.toLowerCase() || "";
+  let answer = "Xin lỗi, tôi chưa có câu trả lời phù hợp.";
+
+  for (const faq of faqs) {
+    if (faq.question && question.includes(faq.question.toLowerCase())) {
+      answer = faq.answer;
+      break;
+    }
   }
-  const wb = XLSX.readFile(filePath);
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  faqData = XLSX.utils.sheet_to_json(sheet);
-  console.log(`✅ Đã load ${faqData.length} FAQ từ ${filePath}`);
-}
-loadFAQ();
 
-// API nhận câu hỏi
-app.post("/ask", (req, res) => {
-  const { question } = req.body;
-  if (!question) return res.json({ answer: "❌ Không có câu hỏi." });
-
-  let found = faqData.find(item =>
-    item.question.toLowerCase().includes(question.toLowerCase())
-  );
-
-  if (found) {
-    return res.json({ answer: found.answer });
-  } else {
-    return res.json({ answer: "❓ Không tìm thấy câu trả lời phù hợp." });
-  }
+  res.json({ answer });
 });
 
+// Route mặc định trả về index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
 });
