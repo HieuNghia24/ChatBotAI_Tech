@@ -1,31 +1,34 @@
-document.getElementById("chat-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const input = document.getElementById("user-input");
-  const question = input.value.trim();
-  if (!question) return;
+document.addEventListener("DOMContentLoaded", () => {
+  const chatBox = document.getElementById("chat-box");
+  const input = document.getElementById("chat-input");
+  const form = document.getElementById("chat-form");
 
-  addMessage(question, "user");
-  input.value = "";
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
 
-  try {
-    const res = await fetch("/ask", {   // dùng relative path
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question })
-    });
+    appendMessage("user", text);
+    input.value = "";
 
-    const data = await res.json();
-    addMessage(data.answer, "bot");
-  } catch (err) {
-    addMessage("❌ Lỗi kết nối tới server.", "bot");
+    try {
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text })
+      });
+      const data = await res.json();
+      appendMessage("bot", data.answer);
+    } catch (err) {
+      appendMessage("bot", "⚠️ Lỗi kết nối tới server.");
+    }
+  });
+
+  function appendMessage(sender, text) {
+    const msg = document.createElement("div");
+    msg.className = sender === "user" ? "user-msg" : "bot-msg";
+    msg.innerText = text;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 });
-
-function addMessage(text, sender) {
-  const chatBox = document.getElementById("chat-box");
-  const msg = document.createElement("div");
-  msg.className = sender === "user" ? "user-msg" : "bot-msg";
-  msg.innerText = text;
-  chatBox.appendChild(msg);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}

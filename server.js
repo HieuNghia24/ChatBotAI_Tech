@@ -1,84 +1,46 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const xlsx = require("xlsx");
-const cors = require("cors");
+import express from "express";
+import path from "path";
+import fs from "fs";
+import XLSX from "xlsx";
 
 const app = express();
-app.use(express.json());
-app.use(cors()); // Cho phép frontend gọi API
+const PORT = process.env.PORT || 10000;
+const __dirname = path.resolve();
 
-// Serve static frontend (public/)
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 let faqData = [];
 
-// ---- Hàm load FAQ ----
 function loadFAQ() {
-  try {
-    const filePath = path.join(__dirname, "faq.xlsx");
-    if (!fs.existsSync(filePath)) {
-      console.warn("⚠️ File faq.xlsx không tồn tại. Chạy không có dữ liệu FAQ.");
-      faqData = [];
-      return;
-    }
-    const workbook = xlsx.readFile(filePath);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    faqData = xlsx.utils.sheet_to_json(sheet);
-    console.log(`✅ Đã load ${faqData.length} FAQ từ ${filePath}`);
-  } catch (err) {
-    console.error("❌ Lỗi load faq.xlsx:", err.message);
-    faqData = [];
+  const filePath = path.join(__dirname, "faq.xlsx");
+  if (!fs.existsSync(filePath)) {
+    console.warn("⚠️ Không tìm thấy file faq.xlsx");
+    return;
   }
+  const wb = XLSX.readFile(filePath);
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  faqData = XLSX.utils.sheet_to_json(sheet);
+  console.log(`✅ Đã load ${faqData.length} FAQ từ ${filePath}`);
 }
 loadFAQ();
 
-// ---- API test ----
-app.get("/ping", (req, res) => {
-  res.json({ message: "pong", time: new Date().toISOString() });
-});
-
-// ---- API lấy toàn bộ FAQ ----
-app.get("/faq", (req, res) => {
-  res.json(faqData);
-});
-
-// ---- API tìm kiếm ----
-app.get("/faq/search", (req, res) => {
-  const keyword = (req.query.q || "").toLowerCase();
-  if (!keyword) return res.status(400).json({ error: "Thiếu query ?q=" });
-
-  const results = faqData.filter(
-    item => item.question && item.question.toLowerCase().includes(keyword)
-  );
-
-  res.json({ keyword, results });
-});
-
-// ---- API reload FAQ ----
-app.get("/faq/reload", (req, res) => {
-  loadFAQ();
-  res.json({ message: "FAQ reloaded", count: faqData.length });
-});
-
-// ---- API cho chatbox ----
+// API nhận câu hỏi
 app.post("/ask", (req, res) => {
-  const question = (req.body.question || "").toLowerCase();
-  if (!question) return res.json({ answer: "❌ Bạn chưa nhập câu hỏi." });
+  const { question } = req.body;
+  if (!question) return res.json({ answer: "❌ Không có câu hỏi." });
 
-  const match = faqData.find(
-    item => item.question && question.includes(item.question.toLowerCase())
+  let found = faqData.find(item =>
+    item.question.toLowerCase().includes(question.toLowerCase())
   );
 
-  if (match) {
-    res.json({ answer: match.answer });
+  if (found) {
+    return res.json({ answer: found.answer });
   } else {
-    res.json({ answer: "🤖 Xin lỗi, tôi chưa có câu trả lời cho câu hỏi này." });
+    return res.json({ answer: "❓ Không tìm thấy câu trả lời phù hợp." });
   }
 });
 
-// ---- Start server ----
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
 });
