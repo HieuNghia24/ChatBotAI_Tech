@@ -1,41 +1,36 @@
-async function sendMessage() {
-  const input = document.getElementById('user-input');
-  const message = input.value.trim();
-  if (message === "") return;
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("chat-form");
+  const input = document.getElementById("user-input");
+  const messages = document.getElementById("messages");
 
-  addMessage(message, "user");
-  input.value = "";
-
-  try {
-    const response = await fetch('/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: message })
-    });
-    const data = await response.json();
-    addMessage(data.answer, "bot");
-  } catch (error) {
-    addMessage("Lỗi kết nối tới server.", "bot");
+  function addMessage(text, sender) {
+    const msg = document.createElement("div");
+    msg.className = sender === "user" ? "msg user" : "msg bot";
+    msg.innerText = text;
+    messages.appendChild(msg);
+    messages.scrollTop = messages.scrollHeight;
   }
-}
 
-function addMessage(text, sender) {
-  const chatBox = document.getElementById("chat-box");
-  const messageDiv = document.createElement("div");
-  messageDiv.classList.add("message", sender);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const question = input.value.trim();
+    if (!question) return;
 
-  const bubble = document.createElement("div");
-  bubble.classList.add("bubble");
-  bubble.innerHTML = text; // giữ <br> từ server
-  messageDiv.appendChild(bubble);
+    addMessage(question, "user");
+    input.value = "";
 
-  chatBox.appendChild(messageDiv);
-  chatBox.scrollTop = chatBox.scrollHeight; // tự động cuộn xuống cuối
-}
+    try {
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
 
-// Enter để gửi tin nhắn
-document.getElementById("user-input").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") {
-    sendMessage();
-  }
+      if (!res.ok) throw new Error("Server error");
+      const data = await res.json();
+      addMessage(data.answer, "bot");
+    } catch (err) {
+      addMessage("❌ Lỗi kết nối tới server.", "bot");
+    }
+  });
 });
