@@ -1,17 +1,11 @@
 {
-  "name": "chatbox-support",
+  "name": "chatbox-support-service",
   "version": "1.0.0",
-  "description": "Chatbox Support AI",
-  "main": "chatbox-support-fixed/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node chatbox-support-fixed/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "body-parser": "^1.20.2",
-    "cors": "^2.8.5"
-  },
-  "engines": {
-    "node": "18.x"
+    "express": "^4.18.2"
   }
 }
