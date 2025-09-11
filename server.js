@@ -34,6 +34,11 @@ function loadFAQ() {
 // Gọi khi khởi động
 loadFAQ();
 
+// ---- Root endpoint ----
+app.get("/", (req, res) => {
+  res.send("✅ Chatbox Support API is running. Try /ping, /faq or /faq/search?q=...");
+});
+
 // ---- Endpoint kiểm tra server ----
 app.get("/ping", (req, res) => {
   res.json({ message: "pong", time: new Date().toISOString() });
@@ -59,6 +64,12 @@ app.get("/faq/search", (req, res) => {
   );
 
   res.json({ keyword, results });
+});
+
+// ---- Endpoint reload FAQ thủ công ----
+app.get("/faq/reload", (req, res) => {
+  loadFAQ();
+  res.json({ message: "FAQ reloaded", count: faqData.length });
 });
 
 // ---- Khởi động server ----
