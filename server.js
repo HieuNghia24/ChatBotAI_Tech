@@ -5,7 +5,6 @@ const XLSX = require('xlsx');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -45,5 +44,6 @@ app.post('/chat', (req, res) => {
 
 // Khởi động server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server started at http://localhost:${PORT}`);
 });
